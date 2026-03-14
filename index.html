@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학기 단위 성취수준 생성기[보문고]</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/static/pretendard.min.css" rel="stylesheet">
+<style>
+:root{--navy:#1B2A4A;--navy-light:#2C3E6B;--accent:#E8393E;--bg:#F4F5F7;--card:#FFF;--border:#D8DCE3;--text:#2D3142;--tl:#6B7280;--ga:#1B6CB0;--ga-bg:#EBF4FF;--gb:#2E7D32;--gb-bg:#E8F5E9;--gc:#B8860B;--gc-bg:#FFF8E1;--gd:#E65100;--gd-bg:#FFF3E0;--ge:#C62828;--ge-bg:#FFEBEE;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.hdr{background:var(--navy);color:#fff;padding:14px 24px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hdr h1{font-size:17px;font-weight:700}.hdr .s{font-size:11px;opacity:.6;margin-top:1px}
+.W{max-width:1100px;margin:0 auto;padding:20px}
+
+/* Steps */
+.steps{display:flex;margin-bottom:20px;background:var(--card);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+.stp{flex:1;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--tl);cursor:pointer;border-bottom:3px solid transparent;position:relative;transition:all .15s}
+.stp.on{color:var(--navy);border-bottom-color:var(--navy);background:#F8F9FB}.stp.ok{color:var(--gb)}
+.stp:hover:not(.on){background:#FAFBFC}
+.stp .n{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#E8EAF0;color:var(--tl);flex-shrink:0}
+.stp.on .n{background:var(--navy);color:#fff}.stp.ok .n{background:var(--gb);color:#fff}
+.stp .arr{position:absolute;right:-6px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--border);z-index:1}
+
+/* Mode selector */
+.mode-sel{display:flex;gap:8px;margin-bottom:20px}
+.mode-btn{flex:1;padding:16px;border:2px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;transition:all .2s;text-align:left}
+.mode-btn:hover{border-color:var(--navy);background:#FAFBFC}
+.mode-btn.on{border-color:var(--navy);background:var(--ga-bg);box-shadow:0 0 0 3px rgba(27,42,74,.1)}
+.mode-btn h4{font-size:14px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.mode-btn p{font-size:11.5px;color:var(--tl);line-height:1.5}
+.mode-btn.on h4{color:var(--navy)}
+
+/* Cards */
+.card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.card-h{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-h h3{font-size:15px;font-weight:700}.card-b{padding:16px}
+
+/* Bulk */
+.bta{width:100%;min-height:300px;border:2px dashed var(--border);border-radius:10px;padding:16px;font-size:13px;font-family:inherit;line-height:1.7;resize:vertical;transition:border-color .2s}
+.bta:focus{outline:none;border-color:var(--navy);border-style:solid}
+.fmt{background:#F8F9FB;border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px}
+.fmt summary{font-size:13px;font-weight:600;cursor:pointer;color:var(--navy)}
+.fmt code{display:block;background:#fff;border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;line-height:2;white-space:pre-wrap;font-family:'D2Coding',monospace;margin-top:10px}
+
+/* Domain / Standard sections */
+.dom{background:var(--card);border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.dom-h{background:linear-gradient(135deg,var(--navy),var(--navy-light));color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.dom-h input{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 12px;border-radius:6px;font-size:14px;font-weight:600;font-family:inherit;width:220px}
+.dom-h input::placeholder{color:rgba(255,255,255,.5)}.dom-h input:focus{outline:none;background:rgba(255,255,255,.25)}
+.dom-b{padding:16px}
+
+/* Grade blocks (domain mode) */
+.gb{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.gb-h{padding:8px 14px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:13px}
+.gb-h.A{background:var(--ga-bg);color:var(--ga);border-bottom:2px solid var(--ga)}
+.gb-h.B{background:var(--gb-bg);color:var(--gb);border-bottom:2px solid var(--gb)}
+.gb-h.C{background:var(--gc-bg);color:var(--gc);border-bottom:2px solid var(--gc)}
+.gb-h.D{background:var(--gd-bg);color:var(--gd);border-bottom:2px solid var(--gd)}
+.gb-h.E{background:var(--ge-bg);color:var(--ge);border-bottom:2px solid var(--ge)}
+.gb-b{padding:10px 14px}
+
+/* Standard card (standard mode) */
+.sc2{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.sc2-h{background:#F8F9FB;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.sc2-h input{border:1px solid transparent;background:transparent;font-size:12px;font-weight:600;color:var(--text);padding:4px 8px;border-radius:4px;font-family:inherit;flex:1}
+.sc2-h input:focus{outline:none;border-color:var(--navy);background:#fff}
+.sc2-b{padding:10px 14px}
+
+/* Common rows */
+.sr{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.sr textarea{flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12.5px;font-family:inherit;line-height:1.5;resize:vertical;min-height:32px;transition:border-color .2s}
+.sr textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 2px rgba(27,42,74,.08)}
+.sr textarea.warn{border-color:var(--accent);background:#FFF8F8}
+.gl{min-width:30px;height:28px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;margin-top:2px}
+.gl.A{background:var(--ga-bg);color:var(--ga)}.gl.B{background:var(--gb-bg);color:var(--gb)}
+.gl.C{background:var(--gc-bg);color:var(--gc)}.gl.D{background:var(--gd-bg);color:var(--gd)}
+.gl.E{background:var(--ge-bg);color:var(--ge)}
+.sl-inp{border:1px solid transparent;background:#F0F1F4;min-width:80px;max-width:100px;font-size:11px;font-weight:700;text-align:center;border-radius:5px;padding:4px 6px;font-family:inherit;color:var(--tl);flex-shrink:0;margin-top:2px}
+.sl-inp:focus{outline:none;border-color:var(--navy);background:#fff}
+
+/* Buttons */
+.btn{padding:8px 16px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.bp{background:var(--navy);color:#fff}.bp:hover{background:var(--navy-light)}
+.ba{background:var(--accent);color:#fff}.ba:hover{opacity:.9}
+.bg{background:transparent;color:var(--tl);border:1px solid var(--border)}.bg:hover{background:#F1F3F5;color:var(--text)}
+.bd{background:transparent;color:var(--accent);font-size:12px;padding:4px 8px}
+.bs{padding:5px 10px;font-size:12px}
+
+/* Output */
+.og{margin-bottom:12px;padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.8}
+.og.A{background:var(--ga-bg);border-left:4px solid var(--ga)}.og.B{background:var(--gb-bg);border-left:4px solid var(--gb)}
+.og.C{background:var(--gc-bg);border-left:4px solid var(--gc)}.og.D{background:var(--gd-bg);border-left:4px solid var(--gd)}
+.og.E{background:var(--ge-bg);border-left:4px solid var(--ge)}
+.os{margin-top:8px;padding:10px 12px;background:rgba(255,255,255,.7);border-radius:6px;margin-bottom:8px}
+.osn{font-size:12px;font-weight:700;color:var(--tl);margin-bottom:3px}
+
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.badge-3{background:rgba(255,255,255,.2);color:#fff}.badge-5{background:rgba(232,57,62,.8);color:#fff}
+.stat{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:600;color:var(--tl);display:flex;align-items:center;gap:5px}
+.sc b{color:var(--navy);font-size:15px}
+.wb{background:#FFF8F0;border:1px solid #FFD9A0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#B45309;display:flex;align-items:flex-start;gap:8px}
+.bb{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:36px;color:var(--tl);font-size:13px}
+.otabs{display:flex;gap:4px;margin-bottom:16px}
+.otab{padding:8px 16px;border:1px solid var(--border);background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--tl);transition:all .2s}
+.otab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.debug-box{background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:12px;margin-top:12px;font-size:11px;line-height:1.6;max-height:200px;overflow:auto;white-space:pre-wrap;font-family:'D2Coding',monospace}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo}=React;
+const h=React.createElement;
+const GC={A:'var(--ga)',B:'var(--gb)',C:'var(--gc)',D:'var(--gd)',E:'var(--ge)'};
+
+// ─── Subcategory detection ───
+function isSub(line){
+  const t=line.trim();
+  if(t.length>25||t.length<2) return false;
+  if(/[·･∙ᆞ]/.test(t)&&t.length<=20) return true;
+  const known=['지식이해','과정기능','가치태도','듣기말하기','화법과작문','언어와매체','수와연산','도형과측정','변화와관계','자료와가능성','문화이해','의사소통','지식정보처리','건강관리'];
+  const norm=t.replace(/[\s·･∙ᆞ\-]/g,'');
+  if(known.includes(norm)) return true;
+  if(/^[가-힣]{1,6}[·･∙ᆞ][가-힣]{1,6}$/.test(t)) return true;
+  return false;
+}
+
+function App(){
+  const [mode,setMode]=useState(''); // 'std' or 'dom'
+  const [step,setStep]=useState(0);
+  const [bulk,setBulk]=useState('');
+  const [toast,setToast]=useState('');
+  const [debug,setDebug]=useState('');
+
+  // Standard mode state
+  const [stdDomains,setStdDomains]=useState([]);
+  // Domain mode state
+  const [domDomains,setDomDomains]=useState([]);
+  // Output type for standard mode
+  const [stdOutType,setStdOutType]=useState('all');
+
+  const flash=m=>{setToast(m);setTimeout(()=>setToast(''),2000)};
+  const copy=t=>navigator.clipboard.writeText(t).then(()=>flash('클립보드에 복사되었습니다!'));
+
+  // ═══════════════════════════════════════
+  // STANDARD MODE PARSER
+  // ═══════════════════════════════════════
+  const parseStd=()=>{
+    const text=bulk.trim();if(!text)return;
+    const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+    let curDom=null,curStd=null;const parsed=[];let uid=1;
+    for(let i=0;i<lines.length;i++){
+      const line=lines[i];
+      if(/^성취기준/.test(line)&&/성취수준/.test(line))continue;
+      if(/^성취기준별/.test(line))continue;
+      const domMatch=line.match(/^\d+\)\s*(.+)/);
+      if(domMatch){curDom={id:uid++,name:domMatch[1].trim(),standards:[]};parsed.push(curDom);curStd=null;continue;}
+      const codeMatch=line.match(/^\[([^\]]+)\]/);
+      if(codeMatch&&!/^[A-E][\t\s]/.test(line)){
+        if(!curDom){curDom={id:uid++,name:'영역 1',standards:[]};parsed.push(curDom);}
+        curStd={id:uid++,code:line,A:'',B:'',C:'',D:'',E:''};curDom.standards.push(curStd);continue;
+      }
+      const gradeMatch=line.match(/^([A-E])[\t\s]{1,}(.+)/);
+      if(gradeMatch&&curStd){curStd[gradeMatch[1]]=gradeMatch[2].trim();continue;}
+      if(/^[A-E]$/.test(line)&&curStd){
+        if(i+1<lines.length&&!/^[A-E]$/.test(lines[i+1].trim())&&!/^[A-E][\t\s]/.test(lines[i+1])&&!/^\[/.test(lines[i+1])&&!/^\d+\)/.test(lines[i+1])){
+          curStd[line]=lines[i+1].trim();i++;
+        }
+        continue;
+      }
+    }
+    if(parsed.length>0){
+      // Auto-fill: 비어있는 등급은 직전에 내용이 있던 등급의 값을 복사
+      parsed.forEach(d=>{d.standards.forEach(s=>{
+        const grades=['A','B','C','D','E'];
+        let last='';
+        for(const g of grades){
+          if(s[g]&&s[g].trim()) last=s[g];
+          else if(last) s[g]=last;
+        }
+      });});
+      setStdDomains(parsed);setStep(1);
+      const t=parsed.reduce((s,d)=>s+d.standards.length,0);
+      flash(parsed.length+'개 영역, '+t+'개 성취기준 파싱 완료!');
+    }else flash('파싱 실패 — 형식을 확인해주세요.');
+  };
+
+  // ═══════════════════════════════════════
+  // DOMAIN MODE PARSER
+  // ═══════════════════════════════════════
+  const parseDom=()=>{
+    const text=bulk.trim();if(!text)return;
+    const rawLines=text.split('\n');
+    let uid=1;const parsed=[];let curDom=null,curGrade=null,curSub=null;
+    const skipP=[/^영역$/,/^영역별\s*성취수준$/];
+    for(let i=0;i<rawLines.length;i++){
+      const line=rawLines[i].trim();if(!line)continue;
+      if(skipP.some(p=>p.test(line)))continue;
+      if(/^[A-E]$/.test(line)){
+        if(!curDom){curDom={id:uid++,name:'영역 1',grades:{}};parsed.push(curDom);}
+        curGrade=line;curSub=null;
+        if(!curDom.grades[curGrade])curDom.grades[curGrade]=[];
+        continue;
+      }
+      if(curGrade&&isSub(line)){
+        curSub={id:uid++,name:line.trim(),text:''};
+        curDom.grades[curGrade].push(curSub);continue;
+      }
+      if(curGrade&&curSub){
+        if(curSub.text)curSub.text+=' '+line;else curSub.text=line;continue;
+      }
+      if(curGrade&&!curSub){
+        curSub={id:uid++,name:'',text:line};curDom.grades[curGrade].push(curSub);continue;
+      }
+      if(curSub&&line.length>30){curSub.text+=' '+line;continue;}
+      curDom={id:uid++,name:line.trim(),grades:{}};parsed.push(curDom);curGrade=null;curSub=null;
+    }
+    if(parsed.length>0){
+      parsed.forEach(d=>{Object.values(d.grades).forEach(subs=>{subs.forEach(s=>{s.text=(s.text||'').trim()});});});
+      setDomDomains(parsed);setStep(1);
+      const t=parsed.reduce((s,d)=>s+Object.values(d.grades).reduce((s2,a)=>s2+a.length,0),0);
+      flash(parsed.length+'개 영역, '+t+'개 항목 파싱 완료!');
+    }else flash('파싱 실패 — 형식을 확인해주세요.');
+  };
+
+  // ═══════════════════════════════════════
+  // STANDARD MODE OPS
+  // ═══════════════════════════════════════
+  const detectGrades=stds=>{for(const s of stds){if((s.D&&s.D.trim())||(s.E&&s.E.trim()))return['A','B','C','D','E'];}return['A','B','C'];};
+  const sUpdDN=(id,v)=>setStdDomains(p=>p.map(d=>d.id===id?{...d,name:v}:d));
+  const sRemD=id=>setStdDomains(p=>p.filter(d=>d.id!==id));
+  const sAddD=()=>setStdDomains(p=>[...p,{id:Date.now(),name:'',standards:[]}]);
+  const sAddStd=did=>setStdDomains(p=>p.map(d=>{if(d.id!==did)return d;return{...d,standards:[...d.standards,{id:Date.now(),code:'',A:'',B:'',C:'',D:'',E:''}]};}));
+  const sRemStd=(did,sid)=>setStdDomains(p=>p.map(d=>{if(d.id!==did)return d;return{...d,standards:d.standards.filter(s=>s.id!==sid)};}));
+  const sUpdStd=(did,sid,f,v)=>setStdDomains(p=>p.map(d=>{if(d.id!==did)return d;return{...d,standards:d.standards.map(s=>s.id===sid?{...s,[f]:v}:s)};}));
+
+  const sStats=useMemo(()=>{
+    let tD=stdDomains.length,tS=0,fS=0,eF=0,h5=false;
+    stdDomains.forEach(d=>{const g=detectGrades(d.standards);if(g.length===5)h5=true;
+      d.standards.forEach(s=>{tS++;const ok=g.every(gr=>s[gr]&&s[gr].trim());if(ok)fS++;g.forEach(gr=>{if(!s[gr]||!s[gr].trim())eF++;});});});
+    return{tD,tS,fS,eF,h5};
+  },[stdDomains]);
+
+  const sGenAll=()=>{
+    const allG=sStats.h5?['A','B','C','D','E']:['A','B','C'];
+    const r={};allG.forEach(g=>r[g]=[]);
+    stdDomains.forEach(d=>{const g=detectGrades(d.standards);d.standards.forEach(s=>{g.forEach(gr=>{if(s[gr]&&s[gr].trim())r[gr].push(s[gr].trim());});});});
+    return{grades:allG,result:r};
+  };
+  const sGenDom=()=>{
+    return stdDomains.map(d=>{const g=detectGrades(d.standards);const r={};g.forEach(gr=>r[gr]=[]);
+      d.standards.forEach(s=>{g.forEach(gr=>{if(s[gr]&&s[gr].trim())r[gr].push(s[gr].trim());});});
+      return{name:d.name,grades:g,result:r};
+    }).filter(d=>d.grades.some(g=>d.result[g].length>0));
+  };
+
+  // ═══════════════════════════════════════
+  // DOMAIN MODE OPS
+  // ═══════════════════════════════════════
+  const dUpdDN=(id,v)=>setDomDomains(p=>p.map(d=>d.id===id?{...d,name:v}:d));
+  const dRemD=id=>setDomDomains(p=>p.filter(d=>d.id!==id));
+  const dAddD=()=>setDomDomains(p=>[...p,{id:Date.now(),name:'',grades:{A:[{id:Date.now()+1,name:'지식·이해',text:''},{id:Date.now()+2,name:'과정·기능',text:''},{id:Date.now()+3,name:'가치·태도',text:''}],B:[{id:Date.now()+4,name:'지식·이해',text:''},{id:Date.now()+5,name:'과정·기능',text:''},{id:Date.now()+6,name:'가치·태도',text:''}],C:[{id:Date.now()+7,name:'지식·이해',text:''},{id:Date.now()+8,name:'과정·기능',text:''},{id:Date.now()+9,name:'가치·태도',text:''}]}}]);
+  const dUpdS=(did,g,sid,f,v)=>setDomDomains(p=>p.map(d=>{if(d.id!==did)return d;const ng={...d.grades};ng[g]=ng[g].map(s=>s.id===sid?{...s,[f]:v}:s);return{...d,grades:ng};}));
+  const dRemS=(did,g,sid)=>setDomDomains(p=>p.map(d=>{if(d.id!==did)return d;const ng={...d.grades};ng[g]=ng[g].filter(s=>s.id!==sid);return{...d,grades:ng};}));
+  const dAddS=(did,g)=>setDomDomains(p=>p.map(d=>{if(d.id!==did)return d;const ng={...d.grades};ng[g]=[...(ng[g]||[]),{id:Date.now(),name:'',text:''}];return{...d,grades:ng};}));
+  const dAddG=(did,g)=>setDomDomains(p=>p.map(d=>{if(d.id!==did)return d;const ng={...d.grades};if(!ng[g])ng[g]=[];return{...d,grades:ng};}));
+
+  const dStats=useMemo(()=>{
+    let tD=domDomains.length,tS=0,eS=0,h5=false;const aG=new Set(),aSN=new Set();
+    domDomains.forEach(d=>{Object.keys(d.grades).forEach(g=>{aG.add(g);if(g==='D'||g==='E')h5=true;(d.grades[g]||[]).forEach(s=>{tS++;if(s.name)aSN.add(s.name);if(!s.text||!s.text.trim())eS++;});});});
+    return{tD,tS,eS,h5,grades:[...aG].sort(),subNames:[...aSN]};
+  },[domDomains]);
+
+  const dGenOutput=()=>{
+    const grades=dStats.grades;const result={};
+    grades.forEach(g=>{result[g]={};const sn=[];
+      domDomains.forEach(d=>{(d.grades[g]||[]).forEach(s=>{if(s.name&&!sn.includes(s.name))sn.push(s.name);});});
+      sn.forEach(n=>{result[g][n]=[];domDomains.forEach(d=>{(d.grades[g]||[]).forEach(s=>{if(s.name===n&&s.text&&s.text.trim())result[g][n].push(s.text.trim());});});});
+    });
+    return{grades,result};
+  };
+
+  // ═══════════════════════════════════════
+  // COPY HELPERS
+  // ═══════════════════════════════════════
+  const sCopyAll=()=>{
+    const{grades,result}=sGenAll();const t=grades.map(g=>g+'\n'+result[g].join(' ')).join('\n\n');
+    copy(t.trim());
+  };
+  const dCopyAll=()=>{
+    const{grades,result}=dGenOutput();
+    const t=grades.map(g=>{const subs=Object.entries(result[g]).map(([sub,txts])=>sub+'\n'+txts.join(' ')).join('\n\n');return g+'\n'+subs;}).join('\n\n---\n\n');
+    copy(t);
+  };
+  const dCopyGrade=g=>{const{result}=dGenOutput();const d=result[g];if(!d)return;const t=Object.entries(d).map(([sub,txts])=>sub+'\n'+txts.join(' ')).join('\n\n');copy(g+'\n'+t);};
+  const dCopySub=(g,sn)=>{const{result}=dGenOutput();copy(result[g][sn].join(' '));};
+
+  // ═══════════════════════════════════════
+  // AUTO-RESIZE HANDLER
+  // ═══════════════════════════════════════
+  const autoH=e=>{e.target.style.height='auto';e.target.style.height=Math.max(36,e.target.scrollHeight)+'px';};
+
+  const canGoStep=i=>{
+    if(i===0)return true;
+    if(i===1)return mode&&((mode==='std'&&stdDomains.length>0)||(mode==='dom'&&domDomains.length>0));
+    if(i===2)return canGoStep(1);
+    return false;
+  };
+
+  // ═══════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════
+  return h('div',null,
+    h('div',{className:'hdr'},
+      h('h1',null,'학기 단위 성취수준 생성기'),
+      h('div',{className:'s'},'사용 방법은 연구부 문의')
+    ),
+    h('div',{className:'W'},
+
+      // Steps
+      h('div',{className:'steps'},
+        ['① 붙여넣기','② 검토 · 수정','③ 최종 생성'].map((l,i)=>
+          h('div',{key:i,className:'stp'+(step===i?' on':'')+(step>i?' ok':''),onClick:()=>{if(canGoStep(i))setStep(i)}},
+            h('div',{className:'n'},step>i?'✓':i+1),h('span',null,l),
+            i<2&&h('span',{className:'arr'},'▶')
+          )
+        )
+      ),
+
+      // ═══ STEP 0: 유형선택 + 붙여넣기 ═══
+      step===0&&h('div',null,
+        // Mode selector
+        h('p',{style:{fontSize:13,color:'var(--tl)',marginBottom:12,textAlign:'center'}},'생성하고자 하는 학기단위 성취수준 유형을 선택하세요'),
+        h('div',{className:'mode-sel'},
+          h('div',{className:'mode-btn'+(mode==='std'?' on':''),onClick:()=>setMode('std')},
+            h('h4',{style:{textAlign:'center',fontSize:16}},'성취기준별')
+          ),
+          h('div',{className:'mode-btn'+(mode==='dom'?' on':''),onClick:()=>setMode('dom')},
+            h('h4',{style:{textAlign:'center',fontSize:16}},'영역별')
+          )
+        ),
+
+        // Bulk paste area (shown after mode selection)
+        mode&&h('div',{className:'card'},
+          h('div',{className:'card-b'},
+            h('h3',{style:{fontSize:16,fontWeight:700,marginBottom:6}},
+              mode==='std'?'○ 해당 과목의 모든 성취기준별 성취수준을 복사해서 붙여넣으세요.':'○ 해당 과목의 모든 영역별 성취수준을 복사해서 붙여넣으세요.'
+            ),
+            h('p',{style:{fontSize:12,color:'var(--tl)',marginBottom:16,lineHeight:'1.7'}},
+              mode==='std'
+                ?h('span',null,'- ',h('strong',null,'평가 계획서의 성취기준별 성취수준 '),h('strong',{style:{color:'var(--accent)'}},'표 테두리 클릭'),h('strong',null,' -> 복사 -> 붙여넣기'))
+                :h('span',null,'- ',h('strong',null,'평가 계획서의 영역별 성취수준 '),h('strong',{style:{color:'var(--accent)'}},'표 테두리 클릭'),h('strong',null,' -> 복사 -> 붙여넣기'))
+            ),
+            h('textarea',{className:'bta',value:bulk,onChange:e=>setBulk(e.target.value),
+              placeholder:'※\n\n평가 계획서 파일의 성취수준 표 테두리를 선택 → 복사(Ctrl+C) → 여기에 붙여넣기(Ctrl+V)'}),
+            h('div',{style:{marginTop:14,display:'flex',gap:8,justifyContent:'space-between'}},
+              h('button',{className:'btn bg',onClick:()=>setBulk('')},'지우기'),
+              h('button',{className:'btn ba',onClick:mode==='std'?parseStd:parseDom,disabled:!bulk.trim()},'성취수준 추출하기 →')
+            )
+          )
+        )
+      ),
+
+      // ═══ STEP 1: 검토 (STANDARD MODE) ═══
+      step===1&&mode==='std'&&h('div',null,
+        h('div',{className:'stat'},
+          h('div',{className:'sc'},h('b',null,sStats.tD),' 영역'),
+          h('div',{className:'sc'},h('b',null,sStats.fS+'/'+sStats.tS),' 성취기준 완료'),
+          sStats.h5&&h('div',{className:'sc',style:{color:'var(--accent)'}},'🔴 5단계(ABCDE) 포함'),
+          sStats.eF>0&&h('div',{className:'sc',style:{color:'var(--accent)'}},'⚠ 빈 칸 '+sStats.eF+'개'),
+          h('div',{style:{marginLeft:'auto'}}),
+          h('button',{className:'btn ba',onClick:()=>setStep(2)},'최종 생성 →')
+        ),
+        sStats.eF>0&&h('div',{className:'wb'},h('span',null,'⚠️'),h('div',null,'비어있는 성취수준이 '+sStats.eF+'개 있습니다.')),
+
+        stdDomains.map((dom,di)=>{
+          const grades=detectGrades(dom.standards);
+          return h('div',{key:dom.id,className:'dom'},
+            h('div',{className:'dom-b'},
+              dom.standards.map((std,si)=>
+                h('div',{key:std.id,className:'sc2'},
+                  h('div',{className:'sc2-h'},
+                    h('input',{value:std.code,onChange:e=>sUpdStd(dom.id,std.id,'code',e.target.value),placeholder:'성취기준 '+(si+1)}),
+                    h('button',{className:'btn bd',onClick:()=>sRemStd(dom.id,std.id)},'✕')
+                  ),
+                  h('div',{className:'sc2-b'},
+                    grades.map(g=>
+                      h('div',{key:g,className:'sr'},
+                        h('div',{className:'gl '+g},g),
+                        h('textarea',{className:(!std[g]||!std[g].trim())?'warn':'',value:std[g],onChange:e=>sUpdStd(dom.id,std.id,g,e.target.value),placeholder:g+' 성취수준',rows:1,onInput:autoH})
+                      )
+                    )
+                  )
+                )
+              ),
+              h('button',{className:'btn bg bs',onClick:()=>sAddStd(dom.id)},'+ 성취기준 추가')
+            )
+          );
+        }),
+        h('div',{className:'bb'},
+          h('div',{style:{display:'flex',gap:8}},
+            h('button',{className:'btn bg',onClick:()=>setStep(0)},'← 다시 붙여넣기'),
+            h('button',{className:'btn bp',onClick:sAddD},'+ 영역 추가')
+          )
+        )
+      ),
+
+      // ═══ STEP 1: 검토 (DOMAIN MODE) ═══
+      step===1&&mode==='dom'&&h('div',null,
+        h('div',{className:'stat'},
+          dStats.h5&&h('div',{className:'sc',style:{color:'var(--accent)'}},'🔴 5단계(ABCDE) 포함'),
+          dStats.eS>0&&h('div',{className:'sc',style:{color:'var(--accent)'}},'⚠ 빈 칸 '+dStats.eS+'개'),
+          h('div',{style:{marginLeft:'auto'}}),
+          h('button',{className:'btn ba',onClick:()=>setStep(2)},'최종 생성 →')
+        ),
+        dStats.eS>0&&h('div',{className:'wb'},h('span',null,'⚠️'),h('div',null,'비어있는 항목이 '+dStats.eS+'개 있습니다.')),
+
+        domDomains.map((dom,di)=>{
+          const grades=Object.keys(dom.grades).sort();
+          return h('div',{key:dom.id,className:'dom'},
+            h('div',{className:'dom-b'},
+              grades.map(g=>
+                h('div',{key:g,className:'gb'},
+                  h('div',{className:'gb-h '+g},h('span',null,g+' 등급'),h('span',{style:{fontSize:11,fontWeight:400}},(dom.grades[g]||[]).length+'개 범주')),
+                  h('div',{className:'gb-b'},
+                    (dom.grades[g]||[]).map(sub=>
+                      h('div',{key:sub.id,className:'sr'},
+                        h('input',{value:sub.name,onChange:e=>dUpdS(dom.id,g,sub.id,'name',e.target.value),placeholder:'범주명',className:'sl-inp'}),
+                        h('textarea',{className:(!sub.text||!sub.text.trim())?'warn':'',value:sub.text,onChange:e=>dUpdS(dom.id,g,sub.id,'text',e.target.value),placeholder:'성취수준 내용',rows:2,onInput:autoH}),
+                        h('button',{className:'btn bd',onClick:()=>dRemS(dom.id,g,sub.id)},'✕')
+                      )
+                    ),
+                    h('button',{className:'btn bg bs',style:{marginTop:4},onClick:()=>dAddS(dom.id,g)},'+ 범주 추가')
+                  )
+                )
+              ),
+              h('div',{style:{marginTop:8,display:'flex',gap:6,flexWrap:'wrap'}},
+                ['A','B','C','D','E'].filter(g=>!grades.includes(g)).map(g=>
+                  h('button',{key:g,className:'btn bg bs',onClick:()=>dAddG(dom.id,g)},'+ '+g+' 등급')
+                )
+              )
+            )
+          );
+        }),
+        h('div',{className:'bb'},
+          h('div',{style:{display:'flex',gap:8}},
+            h('button',{className:'btn bg',onClick:()=>setStep(0)},'← 다시 붙여넣기'),
+            h('button',{className:'btn bp',onClick:dAddD},'+ 영역 추가')
+          )
+        )
+      ),
+
+      // ═══ STEP 2: 결과 (STANDARD MODE) ═══
+      step===2&&mode==='std'&&h('div',null,
+        h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}},
+          h('h3',{style:{fontSize:16,fontWeight:700}},'학기 단위 성취수준(성취기준별)'),
+          h('div',{style:{display:'flex',gap:8}},
+            h('button',{className:'btn bg',onClick:()=>setStep(1)},'← 검토로 돌아가기'),
+            
+          )
+        ),
+
+        (()=>{
+          const{grades,result}=sGenAll();
+          const has=grades.some(g=>result[g].length>0);
+          if(!has)return h('div',{className:'empty'},'📝 입력된 성취수준이 없습니다.');
+          return h('div',{className:'card'},
+            h('div',{className:'card-h'},h('h3',null,'학기 단위 성취수준(성취기준별)')),
+            h('div',{className:'card-b'},
+              grades.map(g=>
+                h('div',{key:g,className:'og '+g},
+                  h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+                    h('strong',{style:{color:GC[g],fontSize:14}},g),
+                    h('button',{className:'btn bg bs',onClick:()=>copy(result[g].join(' '))},'복사')
+                  ),
+                  h('div',{style:{marginTop:4}},result[g].join(' '))
+                )
+              )
+            )
+          );
+        })()
+      ),
+
+      // ═══ STEP 2: 결과 (DOMAIN MODE) ═══
+      step===2&&mode==='dom'&&h('div',null,
+        h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,flexWrap:'wrap',gap:8}},
+          h('h3',{style:{fontSize:16,fontWeight:700}},'학기 단위 성취수준(영역별)'),
+          h('div',{style:{display:'flex',gap:8}},
+            h('button',{className:'btn bg',onClick:()=>setStep(1)},'← 검토로 돌아가기'),
+            
+          )
+        ),
+        h('p',{style:{fontSize:12,color:'var(--tl)',marginBottom:16}},'각 등급 안에서 같은 하위범주끼리 모든 영역의 텍스트가 이어 붙여져 있습니다.'),
+
+        (()=>{
+          const{grades,result}=dGenOutput();
+          const has=grades.some(g=>Object.values(result[g]).some(a=>a.length>0));
+          if(!has)return h('div',{className:'empty'},'📝 입력된 성취수준이 없습니다.');
+          return grades.map(g=>{
+            const subs=result[g];const entries=Object.entries(subs).filter(([,a])=>a.length>0);
+            if(!entries.length)return null;
+            return h('div',{key:g,className:'card',style:{marginBottom:16}},
+              h('div',{className:'card-h'},
+                h('h3',{style:{color:GC[g]}},g+' 등급'),
+                
+              ),
+              h('div',{className:'card-b'},
+                entries.map(([sn,txts])=>
+                  h('div',{key:sn,className:'os'},
+                    h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}},
+                      h('div',{className:'osn'},sn),
+                      h('button',{className:'btn bg bs',onClick:()=>dCopySub(g,sn)},'복사')
+                    ),
+                    h('div',{style:{fontSize:13,lineHeight:1.8}},txts.join(' '))
+                  )
+                )
+              )
+            );
+          });
+        })()
+      )
+    ),
+    h('div',{className:'toast'+(toast?' show':'')},toast)
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>
