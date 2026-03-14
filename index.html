@@ -372,7 +372,6 @@ function App(){
       // ═══ STEP 1: 검토 (STANDARD MODE) ═══
       step===1&&mode==='std'&&h('div',null,
         h('div',{className:'stat'},
-          h('div',{className:'sc'},h('b',null,sStats.tD),' 영역'),
           h('div',{className:'sc'},h('b',null,sStats.fS+'/'+sStats.tS),' 성취기준 완료'),
           sStats.h5&&h('div',{className:'sc',style:{color:'var(--accent)'}},'🔴 5단계(ABCDE) 포함'),
           sStats.eF>0&&h('div',{className:'sc',style:{color:'var(--accent)'}},'⚠ 빈 칸 '+sStats.eF+'개'),
